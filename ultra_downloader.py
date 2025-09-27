@@ -480,6 +480,314 @@ class UltraDownloader:
         self.log("ULTRA DOWNLOADER initialized")
         self.log("Advanced security bypass system ready")
 
+    def needs_selenium_bypass(self, url, response):
+        """Seleniumバイパスが必要か判定"""
+        if not response:
+            return True
+
+        # アダルトサイト特有のポップアップ検出パターン
+        popup_indicators = [
+            'popup', 'overlay', 'modal', 'alert', 'interstitial',
+            'advertisement', 'ads', 'click-to-continue', 'age-verification',
+            'redirect', 'loading', 'please-wait', 'anti-adblock'
+        ]
+
+        # レスポンス内容をチェック
+        content = response.content.decode('utf-8', errors='ignore').lower()
+        if any(indicator in content for indicator in popup_indicators):
+            return True
+
+        # JavaScriptリダイレクトや動的コンテンツ検出
+        js_indicators = [
+            'window.location', 'document.location', 'location.href',
+            'settimeout', 'setinterval', 'onload', 'document.ready'
+        ]
+        if any(indicator in content for indicator in js_indicators):
+            return True
+
+        # アダルトサイト特有のドメイン
+        adult_domains = ['missav', 'pornhub', 'xvideos', 'xhamster', 'javhd', 'av01']
+        if any(domain in url.lower() for domain in adult_domains):
+            return True
+
+        return False
+
+    def selenium_popup_bypass(self, url):
+        """Seleniumによる最強ポップアップバイパス"""
+        self.log("Deploying Selenium stealth browser...")
+
+        try:
+            # Chrome設定（ステルスモード）
+            options = Options()
+            options.add_argument('--headless')  # ヘッドレスモード
+            options.add_argument('--no-sandbox')
+            options.add_argument('--disable-dev-shm-usage')
+            options.add_argument('--disable-gpu')
+            options.add_argument('--disable-blink-features=AutomationControlled')
+            options.add_experimental_option("excludeSwitches", ["enable-automation"])
+            options.add_experimental_option('useAutomationExtension', False)
+
+            # ポップアップ・広告ブロック設定
+            options.add_argument('--disable-popup-blocking')
+            options.add_argument('--disable-notifications')
+            options.add_argument('--disable-infobars')
+            options.add_argument('--disable-extensions')
+            options.add_argument('--disable-plugins')
+            options.add_argument('--disable-images')  # 画像読み込み無効化で高速化
+
+            # ブラウザ起動（ChromeDriverを自動管理）
+            try:
+                from webdriver_manager.chrome import ChromeDriverManager
+                driver = webdriver.Chrome(
+                    service=webdriver.chrome.service.Service(ChromeDriverManager().install()),
+                    options=options
+                )
+            except ImportError:
+                # webdriver_managerがない場合は従来方式
+                driver = webdriver.Chrome(options=options)
+
+            # 検出回避用JavaScript実行
+            driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+
+            self.log("Stealth browser deployed - accessing target")
+
+            # ページアクセス
+            driver.get(url)
+
+            # ポップアップ処理（積極的に閉じる）
+            self.aggressive_popup_handler(driver)
+
+            # ページが完全に読み込まれるまで待機
+            WebDriverWait(driver, 10).until(
+                lambda d: d.execute_script("return document.readyState") == "complete"
+            )
+
+            # 最終的なHTMLを取得
+            html_content = driver.page_source
+
+            driver.quit()
+
+            self.log("Popup bypass successful - content extracted")
+            return html_content
+
+        except Exception as e:
+            self.log(f"Selenium bypass failed: {str(e)}")
+            try:
+                driver.quit()
+            except:
+                pass
+            return None
+
+    def aggressive_popup_handler(self, driver):
+        """積極的ポップアップハンドラー"""
+        self.log("Executing aggressive popup elimination...")
+
+        # 複数回のポップアップ閉じる処理
+        for attempt in range(3):
+            try:
+                # 時間をおいてポップアップをチェック
+                time.sleep(2 + attempt)
+
+                # 一般的なポップアップの閉じるボタンを探して押す
+                close_selectors = [
+                    "//button[contains(text(), '閉じる')]",
+                    "//button[contains(text(), 'Close')]",
+                    "//button[contains(text(), '×')]",
+                    "//span[contains(text(), '×')]",
+                    "//div[contains(@class, 'close')]",
+                    "//div[contains(@class, 'modal-close')]",
+                    "//button[contains(@class, 'close')]",
+                    "//a[contains(@class, 'close')]",
+                    "//*[@id='close']",
+                    "//*[@class='close']"
+                ]
+
+                for selector in close_selectors:
+                    try:
+                        elements = driver.find_elements(By.XPATH, selector)
+                        for element in elements:
+                            if element.is_displayed():
+                                element.click()
+                                self.log(f"Closed popup with selector: {selector}")
+                                time.sleep(1)
+                    except:
+                        continue
+
+                # Escapeキーでモーダル閉じる
+                try:
+                    driver.find_element(By.TAG_NAME, 'body').send_keys('\ue00c')  # ESC key
+                except:
+                    pass
+
+                # 広告overlay除去
+                try:
+                    driver.execute_script("""
+                        var overlays = document.querySelectorAll('[style*="position: fixed"], [style*="position:fixed"]');
+                        overlays.forEach(function(overlay) {
+                            if (overlay.style.zIndex > 100) {
+                                overlay.remove();
+                            }
+                        });
+                    """)
+                except:
+                    pass
+
+            except Exception as e:
+                self.log(f"Popup handler attempt {attempt + 1} failed: {str(e)}")
+                continue
+
+    def extract_adult_site_media(self, soup, base_url, media_urls):
+        """アダルトサイト専用の高度なメディア抽出"""
+        self.log("Deploying adult site media extraction algorithms...")
+
+        # 1. JavaScript内の埋め込みURL検索
+        for script in soup.find_all('script'):
+            if script.string:
+                # 一般的な動画URL形式を検索
+                video_patterns = [
+                    r'["\']([^"\']*\.(?:mp4|webm|m4v|mkv|avi|mov|wmv|flv|3gp)[^"\']*)["\']',
+                    r'["\']([^"\']*player[^"\']*\.php[^"\']*)["\']',
+                    r'["\']([^"\']*stream[^"\']*)["\']',
+                    r'source["\s]*:["\s]*["\']([^"\']+)["\']',
+                    r'src["\s]*:["\s]*["\']([^"\']+)["\']',
+                    r'url["\s]*:["\s]*["\']([^"\']+)["\']'
+                ]
+
+                for pattern in video_patterns:
+                    matches = re.findall(pattern, script.string, re.IGNORECASE)
+                    for match in matches:
+                        if self.is_valid_media_url(match):
+                            media_urls.add(urljoin(base_url, match))
+                            self.log(f"Extracted from JS: {match}")
+
+        # 2. Ajax/APIエンドポイント検索
+        ajax_patterns = [
+            r'/api/[^"\']*',
+            r'/ajax/[^"\']*',
+            r'/player/[^"\']*',
+            r'/stream/[^"\']*',
+            r'/video/[^"\']*',
+            r'/media/[^"\']*'
+        ]
+
+        for script in soup.find_all('script'):
+            if script.string:
+                for pattern in ajax_patterns:
+                    matches = re.findall(pattern, script.string)
+                    for match in matches:
+                        full_url = urljoin(base_url, match)
+                        # Ajax エンドポイントを呼び出してメディアURLを取得
+                        self.probe_ajax_endpoint(full_url, media_urls)
+
+        # 3. iframeの中のコンテンツ
+        for iframe in soup.find_all('iframe'):
+            src = iframe.get('src')
+            if src:
+                iframe_url = urljoin(base_url, src)
+                self.log(f"Probing iframe: {iframe_url}")
+                # iframe内のコンテンツも再帰的に解析
+                try:
+                    iframe_response = self.security.ultra_request(iframe_url)
+                    if iframe_response:
+                        iframe_soup = BeautifulSoup(iframe_response.content, 'html.parser')
+                        self.extract_standard_media(iframe_soup, iframe_url, media_urls)
+                except:
+                    pass
+
+        # 4. Base64エンコードされたデータURL
+        for img in soup.find_all('img'):
+            src = img.get('src', '')
+            if src.startswith('data:image'):
+                # Base64画像を検出
+                media_urls.add(src)
+
+    def probe_ajax_endpoint(self, endpoint_url, media_urls):
+        """Ajaxエンドポイントを調査"""
+        try:
+            response = self.security.ultra_request(endpoint_url)
+            if response:
+                # JSONレスポンスから動画URLを抽出
+                try:
+                    data = response.json()
+                    self.extract_urls_from_json(data, media_urls)
+                except:
+                    # JSONでない場合は通常のHTML解析
+                    soup = BeautifulSoup(response.content, 'html.parser')
+                    self.extract_standard_media(soup, endpoint_url, media_urls)
+        except:
+            pass
+
+    def extract_urls_from_json(self, data, media_urls):
+        """JSON内からURLを抽出"""
+        if isinstance(data, dict):
+            for key, value in data.items():
+                if isinstance(value, str) and self.is_valid_media_url(value):
+                    media_urls.add(value)
+                elif isinstance(value, (dict, list)):
+                    self.extract_urls_from_json(value, media_urls)
+        elif isinstance(data, list):
+            for item in data:
+                self.extract_urls_from_json(item, media_urls)
+
+    def extract_standard_media(self, soup, base_url, media_urls):
+        """標準的なメディア抽出"""
+        # 動画タグ
+        for video in soup.find_all('video'):
+            src = video.get('src')
+            if src and self.is_valid_media_url(src):
+                media_urls.add(urljoin(base_url, src))
+            for source in video.find_all('source'):
+                src = source.get('src')
+                if src and self.is_valid_media_url(src):
+                    media_urls.add(urljoin(base_url, src))
+
+        # 画像タグ
+        for img in soup.find_all('img'):
+            for attr in ['src', 'data-src', 'data-lazy-src']:
+                src = img.get(attr)
+                if src and self.is_valid_media_url(src):
+                    media_urls.add(urljoin(base_url, src))
+
+    def is_valid_media_url(self, url):
+        """有効なメディアURLか判定"""
+        if not url or len(url) < 10:
+            return False
+
+        # データURLは有効
+        if url.startswith('data:'):
+            return True
+
+        # 一般的なメディア拡張子
+        media_extensions = [
+            '.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.svg',
+            '.mp4', '.webm', '.avi', '.mkv', '.mov', '.wmv', '.flv', '.m4v',
+            '.mp3', '.wav', '.m4a', '.aac', '.ogg', '.flac'
+        ]
+
+        url_lower = url.lower()
+        if any(ext in url_lower for ext in media_extensions):
+            return True
+
+        # ストリーミング関連キーワード
+        streaming_keywords = [
+            'stream', 'video', 'media', 'player', 'content',
+            'thumb', 'preview', 'cover', 'poster'
+        ]
+
+        if any(keyword in url_lower for keyword in streaming_keywords):
+            return True
+
+        # 一般的な除外パターン
+        exclude_patterns = [
+            'favicon', 'icon', 'logo', 'banner', 'ad', 'advertisement',
+            'tracker', 'analytics', 'pixel', 'beacon'
+        ]
+
+        if any(pattern in url_lower for pattern in exclude_patterns):
+            return False
+
+        return False
+
     def log(self, message):
         """ログ出力"""
         timestamp = datetime.now().strftime("%H:%M:%S")
@@ -590,28 +898,42 @@ class UltraDownloader:
             raise
 
     def download_from_website(self, url):
-        """Webサイトからダウンロード"""
-        self.log("🌐 Webサイト解析開始")
+        """Webサイトからダウンロード（ポップアップ対策強化版）"""
+        self.log("Website analysis started - deploying advanced countermeasures")
 
-        # サイトアクセス
+        # Step 1: 通常のHTTPリクエスト
+        self.progress_label.config(text="Probing target...")
         response = self.security.ultra_request(url)
-        if not response:
-            raise Exception("サイトにアクセスできませんでした")
 
-        self.log("✅ サイトアクセス成功")
-        self.progress_label.config(text="🔍 メディア検索中...")
+        # Step 2: JavaScript必須/ポップアップサイトの場合はSeleniumで強制突破
+        if not response or self.needs_selenium_bypass(url, response):
+            self.log("Popup/JS detection - switching to Selenium stealth mode")
+            response = self.selenium_popup_bypass(url)
+
+        if not response:
+            raise Exception("Target site access blocked - all bypass methods failed")
+
+        self.log("Target penetration successful")
+        self.progress_label.config(text="Extracting media content...")
 
         # HTML解析
-        soup = BeautifulSoup(response.content, 'html.parser')
+        if hasattr(response, 'content'):
+            soup = BeautifulSoup(response.content, 'html.parser')
+        else:
+            soup = BeautifulSoup(response, 'html.parser')
 
-        # メディアファイル収集
+        # 強化されたメディアファイル収集
         media_urls = set()
 
+        # アダルトサイト専用の高度な検索
+        self.extract_adult_site_media(soup, url, media_urls)
+
+        # 標準的なメディア抽出
         # 画像
         for img in soup.find_all('img'):
-            for attr in ['src', 'data-src', 'data-lazy-src', 'data-original']:
+            for attr in ['src', 'data-src', 'data-lazy-src', 'data-original', 'data-echo', 'data-img']:
                 src = img.get(attr)
-                if src:
+                if src and self.is_valid_media_url(src):
                     media_urls.add(urljoin(url, src))
 
         # 動画
@@ -652,14 +974,8 @@ class UltraDownloader:
         self.download_media_files(list(media_urls))
 
     def is_media_file(self, url):
-        """メディアファイル判定"""
-        media_extensions = [
-            '.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.svg', '.ico',
-            '.mp4', '.avi', '.mov', '.wmv', '.flv', '.webm', '.mkv',
-            '.mp3', '.wav', '.flac', '.aac', '.ogg', '.m4a',
-            '.pdf', '.zip', '.rar', '.7z', '.exe', '.dmg'
-        ]
-        return any(url.lower().endswith(ext) for ext in media_extensions)
+        """メディアファイル判定（統合版）"""
+        return self.is_valid_media_url(url)
 
     def download_media_files(self, urls):
         """メディアファイル一括ダウンロード"""

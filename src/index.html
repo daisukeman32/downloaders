@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DOWNLOADER</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app">
+    <!-- ミニマルヘッダー -->
+    <header class="header">
+      <h1 class="title">DOWNLOADER</h1>
+    </header>
+
+    <!-- メインコンテンツ -->
+    <main class="main-content">
+      <!-- URL入力 -->
+      <div class="url-container">
+        <input
+          type="text"
+          id="url-input"
+          class="url-input"
+          placeholder="Enter URL"
+          autocomplete="off"
+        >
+        <button id="paste-btn" class="icon-btn" title="Paste">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+          </svg>
+        </button>
+      </div>
+
+      <!-- コントロール -->
+      <div id="controls" class="controls hidden">
+        <div class="format-select">
+          <button class="format-btn active" data-format="video">VIDEO</button>
+          <button class="format-btn" data-format="audio">AUDIO</button>
+        </div>
+
+        <button id="download-btn" class="download-btn">
+          DOWNLOAD
+        </button>
+      </div>
+
+      <!-- プログレス -->
+      <div id="progress-container" class="progress-container hidden">
+        <div class="progress-bar">
+          <div id="progress-fill" class="progress-fill"></div>
+        </div>
+        <div class="progress-info">
+          <span id="progress-percent">0%</span>
+          <button id="cancel-btn" class="cancel-btn">CANCEL</button>
+        </div>
+      </div>
+
+      <!-- ステータス -->
+      <div class="status-line">
+        <span id="status-text">Ready</span>
+      </div>
+    </main>
+
+    <!-- フッター -->
+    <footer class="footer">
+      <span id="download-path" class="path-text"></span>
+      <button id="change-path" class="text-btn">Change folder</button>
+    </footer>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>
