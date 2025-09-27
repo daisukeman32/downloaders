@@ -79,7 +79,7 @@ class UltraSecurityBypass:
         retry_strategy = Retry(
             total=10,
             status_forcelist=[403, 429, 500, 502, 503, 504, 520, 521, 522, 523, 524],
-            method_whitelist=["HEAD", "GET", "OPTIONS"],
+            allowed_methods=["HEAD", "GET", "OPTIONS"],
             backoff_factor=2
         )
         adapter = HTTPAdapter(max_retries=retry_strategy)
