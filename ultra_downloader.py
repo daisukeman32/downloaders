@@ -269,118 +269,216 @@ class UltraDownloader:
         os.makedirs(self.download_folder, exist_ok=True)
 
     def setup_window(self):
-        """ウィンドウ設定"""
-        self.root.title("ULTRA DOWNLOADER - 最強版")
-        self.root.geometry("800x600")
-        self.root.configure(bg='#000000')
+        """洗練されたウィンドウ設定"""
+        self.root.title("ULTRA DOWNLOADER")
+        self.root.geometry("920x750")
+        self.root.configure(bg='#0a0a0a')
+        self.root.resizable(True, True)
+
+        # Macの場合はタイトルバーをダークモードに
+        if self.is_mac():
+            try:
+                self.root.tk.call('::tk::unsupported::MacWindowStyle', 'style', self.root._w, 'unifiedTitleAndToolbar', 'black')
+            except:
+                pass
+
+    def is_mac(self):
+        """Mac判定"""
+        return sys.platform == 'darwin'
 
     def create_widgets(self):
-        """UI作成"""
-        # タイトル
+        """洗練されたUI作成"""
+        # カスタムフォント設定
+        title_font = ('SF Pro Display', 28, 'bold') if self.is_mac() else ('Segoe UI', 28, 'bold')
+        subtitle_font = ('SF Pro Text', 13) if self.is_mac() else ('Segoe UI', 13)
+        body_font = ('SF Pro Text', 12) if self.is_mac() else ('Segoe UI', 12)
+        mono_font = ('SF Mono', 11) if self.is_mac() else ('Consolas', 11)
+
+        # メインコンテナ
+        main_container = tk.Frame(self.root, bg='#0a0a0a')
+        main_container.pack(fill='both', expand=True, padx=25, pady=20)
+
+        # ヘッダーセクション
+        header_frame = tk.Frame(main_container, bg='#0a0a0a')
+        header_frame.pack(fill='x', pady=(0, 25))
+
+        # タイトル（ミニマルなデザイン）
         title = tk.Label(
-            self.root,
-            text="🔥 ULTRA DOWNLOADER 🔥",
-            font=('Arial', 24, 'bold'),
-            fg='#00ff00',
-            bg='#000000'
+            header_frame,
+            text="ULTRA DOWNLOADER",
+            font=title_font,
+            fg='#ffffff',
+            bg='#0a0a0a'
         )
-        title.pack(pady=20)
+        title.pack()
 
         # サブタイトル
         subtitle = tk.Label(
-            self.root,
-            text="あらゆるサイトを突破する最強ダウンローダー",
-            font=('Arial', 12),
-            fg='#ffffff',
-            bg='#000000'
+            header_frame,
+            text="Advanced Security Bypass System",
+            font=subtitle_font,
+            fg='#777777',
+            bg='#0a0a0a'
         )
-        subtitle.pack(pady=5)
+        subtitle.pack(pady=(5, 0))
 
-        # URL入力
-        url_frame = tk.Frame(self.root, bg='#000000')
-        url_frame.pack(pady=20, padx=20, fill='x')
+        # ステータスインジケーター
+        status_frame = tk.Frame(header_frame, bg='#0a0a0a')
+        status_frame.pack(pady=(15, 0))
 
-        tk.Label(url_frame, text="URL:", font=('Arial', 14), fg='#ffffff', bg='#000000').pack(side='left')
+        status_dot = tk.Label(
+            status_frame,
+            text="●",
+            font=('Arial', 10),
+            fg='#00ff88',
+            bg='#0a0a0a'
+        )
+        status_dot.pack(side='left')
+
+        status_text = tk.Label(
+            status_frame,
+            text="SYSTEM READY",
+            font=(mono_font[0], 9, 'bold'),
+            fg='#00ff88',
+            bg='#0a0a0a'
+        )
+        status_text.pack(side='left', padx=(5, 0))
+
+        # URL入力セクション
+        input_section = tk.Frame(main_container, bg='#151515', relief='flat', bd=0)
+        input_section.pack(fill='x', pady=(0, 20))
+
+        # パディング用の内部フレーム
+        input_inner = tk.Frame(input_section, bg='#151515')
+        input_inner.pack(fill='x', padx=20, pady=18)
+
+        # URL ラベル
+        url_label = tk.Label(
+            input_inner,
+            text="TARGET URL",
+            font=(mono_font[0], 10, 'bold'),
+            fg='#555555',
+            bg='#151515'
+        )
+        url_label.pack(anchor='w', pady=(0, 8))
+
+        # URL入力フィールド
+        entry_frame = tk.Frame(input_inner, bg='#151515')
+        entry_frame.pack(fill='x')
 
         self.url_entry = tk.Entry(
-            url_frame,
-            font=('Arial', 12),
-            bg='#333333',
+            entry_frame,
+            font=body_font,
+            bg='#252525',
             fg='#ffffff',
-            insertbackground='#00ff00',
+            insertbackground='#00ff88',
             relief='flat',
-            bd=5
+            bd=0,
+            highlightthickness=1,
+            highlightbackground='#333333',
+            highlightcolor='#00ff88'
         )
-        self.url_entry.pack(side='left', fill='x', expand=True, padx=10)
+        self.url_entry.pack(side='left', fill='x', expand=True, ipady=10, padx=(0, 12))
 
-        # ダウンロードボタン
+        # ダウンロードボタン（洗練されたデザイン）
         download_btn = tk.Button(
-            url_frame,
-            text="🚀 突破開始",
-            font=('Arial', 12, 'bold'),
-            bg='#ff0000',
-            fg='#ffffff',
+            entry_frame,
+            text="INITIATE",
+            font=(body_font[0], 11, 'bold'),
+            bg='#00ff88',
+            fg='#000000',
+            activebackground='#00cc6a',
+            activeforeground='#000000',
             command=self.start_download,
-            relief='raised',
-            bd=3
+            relief='flat',
+            bd=0,
+            padx=20,
+            pady=10,
+            cursor='hand2'
         )
-        download_btn.pack(side='right', padx=5)
+        download_btn.pack(side='right')
 
-        # 進捗バー
-        self.progress_frame = tk.Frame(self.root, bg='#000000')
-        self.progress_frame.pack(pady=10, padx=20, fill='x')
+        # 進捗表示エリア
+        progress_section = tk.Frame(main_container, bg='#0a0a0a')
+        progress_section.pack(fill='x', pady=(0, 15))
 
         self.progress_label = tk.Label(
-            self.progress_frame,
-            text="待機中...",
-            font=('Arial', 12),
-            fg='#00ff00',
-            bg='#000000'
+            progress_section,
+            text="System standby",
+            font=(mono_font[0], 10),
+            fg='#666666',
+            bg='#0a0a0a'
         )
         self.progress_label.pack()
 
         # ログエリア
-        log_frame = tk.Frame(self.root, bg='#000000')
-        log_frame.pack(pady=20, padx=20, fill='both', expand=True)
+        log_section = tk.Frame(main_container, bg='#0f0f0f', relief='flat', bd=0)
+        log_section.pack(fill='both', expand=True)
 
-        tk.Label(log_frame, text="🔍 システムログ", font=('Arial', 14), fg='#00ff00', bg='#000000').pack(anchor='w')
+        # ログヘッダー
+        log_header = tk.Frame(log_section, bg='#0f0f0f')
+        log_header.pack(fill='x', padx=15, pady=(12, 0))
+
+        log_title = tk.Label(
+            log_header,
+            text="SYSTEM LOG",
+            font=(mono_font[0], 9, 'bold'),
+            fg='#444444',
+            bg='#0f0f0f'
+        )
+        log_title.pack(anchor='w')
+
+        # ログテキストエリア
+        log_container = tk.Frame(log_section, bg='#0f0f0f')
+        log_container.pack(fill='both', expand=True, padx=15, pady=(8, 15))
 
         self.log_text = scrolledtext.ScrolledText(
-            log_frame,
-            font=('Consolas', 10),
-            bg='#111111',
-            fg='#00ff00',
-            insertbackground='#00ff00',
+            log_container,
+            font=(mono_font[0], 9),
+            bg='#1a1a1a',
+            fg='#888888',
+            insertbackground='#00ff88',
             relief='flat',
-            bd=2
+            bd=0,
+            highlightthickness=0,
+            selectbackground='#333333',
+            selectforeground='#ffffff'
         )
-        self.log_text.pack(fill='both', expand=True, pady=5)
+        self.log_text.pack(fill='both', expand=True)
 
         # フッター
-        footer_frame = tk.Frame(self.root, bg='#000000')
-        footer_frame.pack(pady=10, padx=20, fill='x')
+        footer_section = tk.Frame(main_container, bg='#0a0a0a')
+        footer_section.pack(fill='x', pady=(10, 0))
 
         self.folder_label = tk.Label(
-            footer_frame,
-            text=f"💾 保存先: {self.download_folder}",
-            font=('Arial', 10),
-            fg='#ffffff',
-            bg='#000000'
+            footer_section,
+            text=f"Output: {self.download_folder}",
+            font=(mono_font[0], 8),
+            fg='#444444',
+            bg='#0a0a0a'
         )
         self.folder_label.pack(side='left')
 
         change_btn = tk.Button(
-            footer_frame,
-            text="📁 変更",
-            font=('Arial', 10),
+            footer_section,
+            text="CHANGE",
+            font=(mono_font[0], 8),
             command=self.change_folder,
-            bg='#333333',
-            fg='#ffffff'
+            bg='#1a1a1a',
+            fg='#666666',
+            activebackground='#252525',
+            activeforeground='#888888',
+            relief='flat',
+            bd=0,
+            padx=10,
+            pady=2,
+            cursor='hand2'
         )
         change_btn.pack(side='right')
 
-        self.log("🔥 ULTRA DOWNLOADER 起動完了")
-        self.log("💪 最強のセキュリティ突破システム待機中")
+        # 初期化メッセージ
+        self.log("ULTRA DOWNLOADER initialized")
+        self.log("Advanced security bypass system ready")
 
     def log(self, message):
         """ログ出力"""
@@ -395,8 +493,8 @@ class UltraDownloader:
         folder = filedialog.askdirectory(initialdir=self.download_folder)
         if folder:
             self.download_folder = folder
-            self.folder_label.config(text=f"💾 保存先: {self.download_folder}")
-            self.log(f"📁 保存先変更: {self.download_folder}")
+            self.folder_label.config(text=f"Output: {self.download_folder}")
+            self.log(f"Output directory changed: {self.download_folder}")
 
     def start_download(self):
         """ダウンロード開始"""
@@ -416,8 +514,8 @@ class UltraDownloader:
     def download_worker(self, url):
         """ダウンロードワーカー"""
         try:
-            self.progress_label.config(text="🔍 サイト解析中...")
-            self.log(f"🎯 ターゲット: {url}")
+            self.progress_label.config(text="Analyzing target...")
+            self.log(f"Target acquired: {url}")
 
             # YouTube/動画サイトの場合
             if self.is_video_site(url):
@@ -427,11 +525,11 @@ class UltraDownloader:
                 self.download_from_website(url)
 
         except Exception as e:
-            self.log(f"❌ エラー: {str(e)}")
-            messagebox.showerror("エラー", f"ダウンロード失敗: {str(e)}")
+            self.log(f"Error: {str(e)}")
+            messagebox.showerror("Error", f"Download failed: {str(e)}")
         finally:
             self.is_downloading = False
-            self.progress_label.config(text="待機中...")
+            self.progress_label.config(text="System standby")
 
     def is_video_site(self, url):
         """動画サイト判定"""
@@ -444,7 +542,7 @@ class UltraDownloader:
 
     def download_video(self, url):
         """動画ダウンロード"""
-        self.log("🎬 動画サイト検出 - yt-dlp使用")
+        self.log("Video site detected - using yt-dlp")
 
         try:
             # yt-dlpでダウンロード
@@ -455,13 +553,14 @@ class UltraDownloader:
                 '--no-check-certificate',
                 '--user-agent', self.security.session.headers['User-Agent'],
                 '--referer', url,
-                '--extract-flat', 'false',
                 '-f', 'best[height<=1080]/best',
                 '-o', output_template,
+                '--ignore-errors',
+                '--no-warnings',
                 url
             ]
 
-            self.progress_label.config(text="📥 動画ダウンロード中...")
+            self.progress_label.config(text="Downloading video...")
 
             process = subprocess.Popen(
                 cmd,
@@ -472,7 +571,7 @@ class UltraDownloader:
 
             for line in process.stdout:
                 if line.strip():
-                    self.log(f"📹 {line.strip()}")
+                    self.log(f"yt-dlp: {line.strip()}")
                     if '%' in line:
                         # 進捗更新
                         self.root.update_idletasks()
@@ -480,14 +579,14 @@ class UltraDownloader:
             process.wait()
 
             if process.returncode == 0:
-                self.log("✅ 動画ダウンロード完了")
-                self.progress_label.config(text="✅ 完了")
+                self.log("Video download completed")
+                self.progress_label.config(text="Download completed")
             else:
                 error = process.stderr.read()
                 raise Exception(f"yt-dlp error: {error}")
 
         except Exception as e:
-            self.log(f"❌ 動画ダウンロードエラー: {str(e)}")
+            self.log(f"Video download error: {str(e)}")
             raise
 
     def download_from_website(self, url):
